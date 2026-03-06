@@ -1,4 +1,4 @@
-                                              🍽️ NutriChef AI – Healthy Recipes & Smart Grocery Planner
+                             🍽️ NutriChef AI – Healthy Recipes & Smart Grocery Planner
 NutriChef AI is a smart web application that helps users generate recipes, plan healthier meals, and create budget‑friendly shopping lists using Artificial Intelligence.
 
 The platform allows users to enter available ingredients and instantly receive AI‑generated recipes, health‑focused meal suggestions, and organized grocery lists.
