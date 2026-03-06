@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Recipe Generator</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: black;
+        }
+
+        .navbar a {
+            color: white !important;
+            margin-right: 20px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            color: #ffc107 !important;
+        }
+
+        /* TITLE */
+        .title-box {
+            background: linear-gradient(45deg,#ff6b6b,#ff9f43);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* PANELS */
+        .left-panel, .right-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .small-table th, .small-table td {
+            font-size: 13px;
+            padding: 6px;
+        }
+
+        /* SAVED RECIPES */
+        .saved-box {
+            margin-top: 25px;
+        }
+
+        .saved-item {
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .saved-title {
+            color: black;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .saved-title:hover {
+            color: #ff6b6b;
+        }
+
+        /* COOKING TIPS */
+        .tip-card {
+            transition: 0.3s;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .tip-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+        }
+
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar p-3">
+    <div class="container d-flex justify-content-between">
+
+        <div>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="#blogs">Blogs</a>
+            <a href="#tips">Cooking Tips</a>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'recipe_generator' %}">Recipe Generator</a>
+                <a href="{% url 'health_supporter' %}">Health Supporter</a>
+                <a href="{% url 'shopping_list' %}">Budget Planner</a>
+                <a href="{% url 'saved_recipes' %}">Saved Recipes</a>
+                
+            {% endif %}
+        </div>
+
+        <div>
+            {% if user.is_authenticated %}
+                <span class="text-white me-3">{{ user.username }}</span>
+                <a class="btn btn-danger btn-sm" href="{% url 'logout' %}">Logout</a>
+            {% else %}
+                <a class="btn btn-outline-light btn-sm" href="{% url 'login' %}">Login</a>
+                <a class="btn btn-warning btn-sm" href="{% url 'signup' %}">Signup</a>
+            {% endif %}
+        </div>
+
+    </div>
+</nav>
+
+<!-- TITLE -->
+<div class="title-box">
+    <h3>🍽 AI Recipe Generator</h3>
+</div>
+
+<div class="container-fluid">
+<div class="row">
+
+<!-- LEFT PANEL -->
+<div class="col-md-4">
+<div class="left-panel">
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="mb-2">
+        <label>Ingredients</label>
+        <textarea name="ingredients" class="form-control" required></textarea>
+    </div>
+
+    <div class="mb-2">
+        <label>Diet Type</label>
+        <select name="type" class="form-select">
+            <option value="veg">Vegetarian</option>
+            <option value="nonveg">Non-Vegetarian</option>
+            <option value="vegan">Vegan</option>
+            <option value="jain">Jain</option>
+        </select>
+    </div>
+
+    <div class="mb-2">
+        <label>Goal</label>
+        <select name="goal" class="form-select">
+            <option value="protein">High Protein</option>
+            <option value="fatloss">Fat Loss</option>
+            <option value="muscle">Muscle Gain</option>
+            <option value="balanced">Balanced</option>
+        </select>
+    </div>
+
+    <div class="mb-2">
+        <label>Cuisine</label>
+        <select name="cuisine" class="form-select">
+            <option value="indian">Indian</option>
+            <option value="italian">Italian</option>
+            <option value="chinese">Chinese</option>
+        </select>
+    </div>
+
+    <div class="mb-2">
+        <label>Budget (₹)</label>
+        <input type="number" name="budget" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-warning w-100 mt-2">
+        Generate Recipe
+    </button>
+</form>
+
+<!-- SAVED RECIPES -->
+<div class="saved-box">
+
+{% for r in my_recipes %}
+<div class="saved-item d-flex justify-content-between align-items-center">
+
+    <a class="saved-title" href="?recipe_id={{ r.id }}">
+        {{ r.title }}
+    </a>
+
+    <a href="{% url 'delete_recipe' r.id %}"
+       class="btn btn-sm btn-danger"
+       onclick="return confirm('Are you sure you want to delete this recipe?');">
+        Delete
+    </a>
+
+</div>
+{% empty %}
+<p class="text-muted">No saved recipes yet.</p>
+{% endfor %}
+
+</div>
+
+</div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="col-md-8">
+<div class="right-panel">
+
+{% if recipe and not recipe.error %}
+
+<h4 class="text-success">{{ recipe.recipe_name }}</h4>
+<hr>
+
+<h6>Main Ingredients</h6>
+
+<table class="table table-bordered small-table">
+    <thead class="table-light">
+        <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Cal</th>
+            <th>Protein</th>
+            <th>Carbs</th>
+            <th>Fat</th>
+            <th>Cost ₹</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in recipe.ingredients %}
+        <tr>
+            <td>{{ item.item }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.calories }}</td>
+            <td>{{ item.protein }}</td>
+            <td>{{ item.carbs }}</td>
+            <td>{{ item.fat }}</td>
+            <td>{{ item.cost }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h6>Preparation Steps</h6>
+<ol>
+    {% for step in recipe.steps %}
+        <li style="margin-bottom:10px;">{{ step }}</li>
+    {% endfor %}
+</ol>
+
+{% elif recipe and recipe.error %}
+<div class="alert alert-danger">
+    {{ recipe.error }}
+</div>
+{% else %}
+<p class="text-muted">Generated recipe will appear here.</p>
+{% endif %}
+
+</div>
+</div>
+
+</div>
+</div>
+<!-- BLOG SECTION -->
+<div class="container mt-5" id="blogs">
+    <h2 class="text-center mb-5 fw-bold">🍽️ Food Category Blogs</h2>
+
+    <div class="row">
+
+        <!-- Blog 1 - Vegetarian -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow h-100 border-0">
+                <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe"
+                     class="card-img-top" style="height:220px;object-fit:cover;">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-success">🥦 Vegetarian Excellence</h5>
+                    <p class="text-muted">
+                        Discover nutrient-rich vegetarian meals packed with protein and flavor.
+                    </p>
+                    <a href="{% url 'blog1' %}" class="btn btn-success w-100">Read More</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog 2 - Non-Vegetarian -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow h-100 border-0">
+                <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2"
+                     class="card-img-top" style="height:220px;object-fit:cover;">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-danger">🍗 Non‑Veg Performance Meals</h5>
+                    <p class="text-muted">
+                        High-protein non-veg dishes designed for strength and energy.
+                    </p>
+                    <a href="{% url 'blog2' %}" class="btn btn-danger w-100">Read More</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog 3 - Vegan -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow h-100 border-0">
+                <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061"
+                     class="card-img-top" style="height:220px;object-fit:cover;">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-success">🌱 Advanced Vegan Nutrition</h5>
+                    <p class="text-muted">
+                        Plant-based superfoods and balanced vegan lifestyle strategies.
+                    </p>
+                    <a href="{% url 'blog3' %}" class="btn btn-success w-100">Read More</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog 4 - Healthy Lifestyle -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow h-100 border-0">
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836"
+                     class="card-img-top" style="height:220px;object-fit:cover;">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-primary">🏋️ Healthy Lifestyle & Fitness</h5>
+                    <p class="text-muted">
+                        Smart meal planning and habits for long-term health.
+                    </p>
+                    <a href="{% url 'blog4' %}" class="btn btn-primary w-100">Read More</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- COOKING TIPS SECTION -->
+<div class="container mt-5 mb-5" id="tips">
+
+    <h2 class="text-center fw-bold mb-5" style="font-size:32px;">
+        👨‍🍳 Pro Cooking Tips
+    </h2>
+
+    <div class="row">
+
+        <!-- Tip 1 -->
+        <div class="col-md-6 mb-4">
+            <div class="p-4 shadow rounded bg-white tip-card">
+                <h5 class="fw-bold mb-3">🥬 Use Fresh Ingredients</h5>
+                <p class="text-muted">
+                    Fresh vegetables, herbs, and proteins enhance flavor, texture,
+                    and nutritional value. Always check color, smell, and firmness
+                    before purchasing.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tip 2 -->
+        <div class="col-md-6 mb-4">
+            <div class="p-4 shadow rounded bg-white tip-card">
+                <h5 class="fw-bold mb-3">🔥 Preheat Your Pan</h5>
+                <p class="text-muted">
+                    A properly heated pan ensures even cooking and prevents sticking.
+                    Always allow your pan to heat before adding oil or ingredients.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tip 3 -->
+        <div class="col-md-6 mb-4">
+            <div class="p-4 shadow rounded bg-white tip-card">
+                <h5 class="fw-bold mb-3">🧂 Balance Salt Carefully</h5>
+                <p class="text-muted">
+                    Add salt gradually and taste frequently. Proper seasoning enhances
+                    natural flavors without overpowering the dish.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tip 4 -->
+        <div class="col-md-6 mb-4">
+            <div class="p-4 shadow rounded bg-white tip-card">
+                <h5 class="fw-bold mb-3">🍖 Let Meat Rest</h5>
+                <p class="text-muted">
+                    Allow cooked meat to rest 5–10 minutes before cutting. This keeps
+                    juices inside and improves tenderness.
+                </p>
+            </div>
+        </div>
+
+        <!-- Extra Tip 5 -->
+        <div class="col-md-6 mb-4">
+            <div class="p-4 shadow rounded bg-white tip-card">
+                <h5 class="fw-bold mb-3">🥘 Master Knife Skills</h5>
+                <p class="text-muted">
+                    Uniform cutting ensures even cooking. Invest time in learning
+                    chopping, dicing, and julienne techniques.
+                </p>
+            </div>
+        </div>
+
+        <!-- Extra Tip 6 -->
+        <div class="col-md-6 mb-4">
+            <div class="p-4 shadow rounded bg-white tip-card">
+                <h5 class="fw-bold mb-3">⏳ Control Cooking Time</h5>
+                <p class="text-muted">
+                    Overcooking destroys texture and nutrients. Follow timing closely
+                    and use timers for precision.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.tip-card {
+    transition: 0.3s;
+    border-left: 5px solid #ff6b6b;
+}
+
+.tip-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+}
+</style>
+
+</body>
+</html>
+
+
+</body>
+</html>
