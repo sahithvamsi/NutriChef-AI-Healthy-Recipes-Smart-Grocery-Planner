@@ -63,6 +63,9 @@ ai_meal_planner/
 1️⃣ Clone the repository
 git clone https://github.com/yourusername/nutrichef-ai.git
 cd nutrichef-ai
+
+
+
 2️⃣ Create virtual environment
 python -m venv venv
 Activate it:
@@ -75,9 +78,13 @@ Mac/Linux
 source venv/bin/activate
 3️⃣ Install dependencies
 pip install -r requirements.txt
+
+
 4️⃣ Run migrations
 python manage.py makemigrations
 python manage.py migrate
+
+
 5️⃣ Run the server
 python manage.py runserver
 Open in browser:
